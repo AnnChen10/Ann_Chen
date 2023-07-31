@@ -1,0 +1,60 @@
+```{r}
+library(rvest)
+library(xml2)
+library(tidyverse)
+
+url <- "https://www.flaconi.de/parfum/yves-saint-laurent/black-opium/yves-saint-laurent-black-opium-eau-de-parfum.html?variant=80005078-30"
+
+# Read the HTML content of the page
+page <- read_html(url)
+
+# Extract the review section of the page
+reviews <- page %>%
+  html_nodes(".review-text-content") %>%
+  html_text()
+
+# Extract the star rating of each review
+ratings <- page %>%
+  html_nodes(".review-rating") %>%
+  as.numeric()  
+
+# Extract the helpfulness rate of each review
+helpful_rate <- page %>%
+  html_nodes(".review-helpfulness") %>%
+  as.numeric()
+
+#Combining all the lists to form a data frame
+review_df<-tibble(Content = reviews, Rating = ratings, HelpfulRate = helpful_rate,
+Description = description_data)
+```
+
+```{r}
+library(textcat)
+library(tidyverse)
+library(deeplr)
+
+#Import data
+raw_data <- read.csv(file= "/Users/annchen/Desktop/ESMT Berlin/Thesis/Data collection/Review_raw.csv", header = TRUE,sep=";", row.names = NULL)
+
+#Function to detect and translate data
+translate_reviews <- function(text) {
+  if (!is.na(text) && textcat(text) == "german") {
+    
+    translated_text <- translate2(text, 
+           source_lang = "DE",
+           target_lang = "EN",
+           auth_key = "6bccfc75-b806-dc20-6a0d-d950edc80b08:fx")
+    Sys.sleep(1) # To avoid hitting API limits (optional)
+    
+    return(translated_text)
+    } 
+  else {
+    return(text)
+  }
+}
+
+translated_data <- raw_data %>%
+  mutate(translated_review_body = map_chr(review_body, translate_reviews))
+
+```
+
